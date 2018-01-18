@@ -17,11 +17,56 @@ type readCb =
     "contents": string
   };
 
-type compileResult('contracts) = {
+type contract = {
   .
-  "contracts": Js.Dict.t(Js.t({..}) as 'contracts),
+  "assembly": {
+    .
+    /* ".data" is missing */
+    "code":
+      array(
+        {
+          .
+          "begin": int,
+          "end": int,
+          "name": string,
+          "value": string
+        }
+      )
+  },
+  "bytecode": string,
+  "functionHashes": Js.Dict.t(string),
+  "gasEstimates": {
+    .
+    "creation": array(int),
+    "external": Js.Dict.t(int),
+    "internal": Js.Dict.t(int)
+  },
+  "interface": string,
+  "metadata": string,
+  "opcodes": string,
+  "runtimeBytecode": string,
+  "srcmap": string,
+  "srcmapRuntime": string
+};
+
+type node = {
+  .
+  "attributes": {
+    .
+    "absolutePath": string,
+    "exportedSymbols": Js.Dict.t(array(int))
+  },
+  "children": Js.Undefined.t(array(node)),
+  "id": int,
+  "name": string,
+  "src": string
+};
+
+type compileResult = {
+  .
+  "contracts": Js.Dict.t(contract),
   "errors": array(string),
-  "sources": string,
+  "sources": Js.Dict.t({. "AST": node}),
   "sourceList": array(string)
 };
 
@@ -30,17 +75,19 @@ external compile :
   (
     t,
     ~compileInput: [@bs.unwrap]
-                   [ | `collection(Js.Dict.t(string)) | `sourceCode(string)],
+                   [
+                     | `collection({. "sources": Js.Dict.t(string)})
+                     | `sourceCode(string)
+                   ],
     ~optimization: int,
-    ~readCb: Js.Undefined.t(readCb),
+    ~readCb: Js.Undefined.t(readCb)=?,
     unit
   ) =>
-  compileResult(Js.t({..})) =
+  compileResult =
   "";
 
 [@bs.send] external license : t => string = "";
 
-[@bs.send]
-external compileStandardWrapper : t => compileResult(Js.t({..})) = "";
+[@bs.send] external compileStandardWrapper : t => compileResult = "";
 
 [@bs.send] external linkBytecode : (t, string, Js.Dict.t(string)) => 'a = "";
